@@ -33,7 +33,7 @@ app.use(
 app.use(cookieParser());
 app.use(urlencoded({ extended: false }));
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 connect(process.env.MONGO_URL).then(
   console.log("Mongo Connected!!")
@@ -59,3 +59,5 @@ const server = getServer();
 server.listen(PORT, () => {
   console.log(`Aura server started at PORT : ${PORT}`);
 });
+
+export default server
