@@ -9,7 +9,7 @@ function loggingMiddleware() {
 
     const fileName = `${now.toISOString().split("T")[0]}.log`;
 
-    const logDir = "./tmp";
+    const logDir = "/tmp";
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir);
     }
