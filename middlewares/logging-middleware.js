@@ -9,7 +9,7 @@ function loggingMiddleware() {
 
     const fileName = `${now.toISOString().split("T")[0]}.log`;
 
-    const logDir = "./logs";
+    const logDir = "./temp";
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir);
     }
@@ -24,9 +24,9 @@ function loggingMiddleware() {
       req.body
     )} Headers: ${JSON.stringify(req.headers.authorization)}\n\n`;
 
-    // fs.appendFile(`./logs/${fileName}`, logAdded, (err) => {
-    //   if (err) throw err;
-    // });
+    fs.appendFile(`./logs/${fileName}`, logAdded, (err) => {
+      if (err) throw err;
+    });
 
     next();
   };
