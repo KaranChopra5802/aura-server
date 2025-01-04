@@ -8,12 +8,13 @@ function loggingMiddleware() {
     const userAgent = req.headers["user-agent"];
 
     const fileName = `${now.toISOString().split("T")[0]}.log`;
-
     const logDir = "/tmp";
+
     if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir);
+      fs.mkdirSync(logDir, { recursive: true });
     }
 
+    const logFilePath = `${logDir}/${fileName}`;
     const logAdded = `${now.toLocaleString("en-US")} - IP ${ip} Method: ${
       req.method
     } Url: ${req.url} Query Parameters: ${JSON.stringify(
@@ -24,9 +25,15 @@ function loggingMiddleware() {
       req.body
     )} Headers: ${JSON.stringify(req.headers.authorization)}\n\n`;
 
-    fs.appendFile(`/temp/${fileName}`, logAdded, (err) => {
-      if (err) throw err;
-    });
+    if (fs.existsSync(logFilePath)) {
+      fs.appendFile(logFilePath, logAdded, (err) => {
+        if (err) throw err;
+      });
+    } else {
+      fs.writeFile(logFilePath, logAdded, (err) => {
+        if (err) throw err;
+      });
+    }
 
     next();
   };
