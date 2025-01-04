@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "This is a server for the aura socials app",
   "main": "app.js",
+  "type":"commonjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
