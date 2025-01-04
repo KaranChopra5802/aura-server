@@ -40,7 +40,7 @@ connect(process.env.MONGO_URL).then(
 );
 
 admin.initializeApp({
-  credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY || serviceAccount),
+  credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY),
   databaseURL: 'https://aura-social.firebaseio.com',
 });
 
