@@ -60,4 +60,4 @@ server.listen(PORT, () => {
   console.log(`Aura server started at PORT : ${PORT}`);
 });
 
-export default server
+module.exports = server
