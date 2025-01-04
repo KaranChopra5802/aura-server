@@ -10,7 +10,7 @@ const { json, urlencoded } = require("express");
 const connect = mongoose.connect;
 const admin = require('firebase-admin');
 
-const serviceAccount = require('./services/serviceAccountKey.json');
+// const serviceAccount = require('./services/serviceAccountKey.json');
 
 
 const {
@@ -39,8 +39,10 @@ connect(process.env.MONGO_URL).then(
   console.log("Mongo Connected!!")
 );
 
+const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
+
 admin.initializeApp({
-  credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY),
+  credential: admin.credential.cert(serviceAccountKey),
   databaseURL: 'https://aura-social.firebaseio.com',
 });
 
