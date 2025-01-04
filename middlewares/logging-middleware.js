@@ -24,7 +24,7 @@ function loggingMiddleware() {
       req.body
     )} Headers: ${JSON.stringify(req.headers.authorization)}\n\n`;
 
-    fs.appendFile(`./logs/${fileName}`, logAdded, (err) => {
+    fs.appendFile(`/temp/${fileName}`, logAdded, (err) => {
       if (err) throw err;
     });
 
