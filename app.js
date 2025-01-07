@@ -33,7 +33,7 @@ app.use(
 app.use(cookieParser());
 app.use(urlencoded({ extended: false }));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 connect(process.env.MONGO_URL).then(
   console.log("Mongo Connected!!")

@@ -8,6 +8,32 @@ const admin = require("firebase-admin");
 const { sendPushNotification } = require("../services/push_notification");
 const { send } = require("process");
 
+const changePassword = async (req, res) => {
+  try {
+    const { userId, newPassword, oldPassword } = req.body;
+    const user = await User.findOne({_id: userId});
+    
+
+    const salt = user.salt;
+    const hashedPassword = createHmac("sha256", salt)
+      .update(oldPassword)
+      .digest("hex");
+    if (hashedPassword == user.password) {
+      const newPasswordHash = createHmac("sha256", salt)
+        .update(newPassword)
+        .digest("hex");
+
+      await User.updateOne({ _id:userId }, { password: newPasswordHash });
+      res.status(200).send(user);
+    }else{
+      res.status(403).send("Invalid username or password");
+    }
+  } catch (e) {
+    console.log(e)
+    res.status(404).send(e);
+  }
+};
+
 const getUserPosts = async (req, res) => {
   const allPosts = await Post.find({}).populate(
     "createdBy",
@@ -839,4 +865,5 @@ module.exports = {
   editEvent,
   continueEvent,
   markAttendanceEvent,
+  changePassword
 };

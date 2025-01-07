@@ -24,7 +24,8 @@ const {
   deleteEvent,
   editEvent,
   continueEvent,
-  markAttendanceEvent
+  markAttendanceEvent,
+  changePassword,
 } = require("../routes/post-routes");
 
 const protectedRouter = express.Router();
@@ -44,13 +45,14 @@ protectedRouter.get("/search", searchUsers);
 protectedRouter.post("/follow/:id", followUsers);
 protectedRouter.post("/unfollow/:id", unfollowUsers);
 
-protectedRouter.patch("/user/setlastlogin/:id",setLastLoggedIn)
+protectedRouter.patch("/user/setlastlogin/:id", setLastLoggedIn);
+protectedRouter.post("/user/change-password", changePassword);
 
 protectedRouter.post("/sendpoints/:id", sendPoints);
 
-protectedRouter.get("/chats/getallchats/:id",getAllChats);
-protectedRouter.post("/chats/chat/:id",startChat);
-protectedRouter.get("/chats/chat/:id",continueChat);
+protectedRouter.get("/chats/getallchats/:id", getAllChats);
+protectedRouter.post("/chats/chat/:id", startChat);
+protectedRouter.get("/chats/chat/:id", continueChat);
 
 protectedRouter.post("/events/create/:id", createEvent);
 protectedRouter.post("/events/join/:id", joinEvent);
@@ -60,7 +62,5 @@ protectedRouter.delete("/events/delete/:id", deleteEvent);
 protectedRouter.patch("/events/edit/:id", editEvent);
 protectedRouter.post("/events/continue/:id", continueEvent);
 protectedRouter.post("/events/attendance/:id", markAttendanceEvent);
-
-
 
 module.exports = protectedRouter;
