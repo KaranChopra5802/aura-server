@@ -26,11 +26,16 @@ const {
   continueEvent,
   markAttendanceEvent,
   changePassword,
+  commentPosts,
+  likeComments,
+  getUserPostsFollowing
 } = require("../routes/post-routes");
 
 const protectedRouter = express.Router();
 
 protectedRouter.get("/posts", getUserPosts);
+protectedRouter.get("/posts/following/:id", getUserPostsFollowing);
+
 protectedRouter.get("/user/:id", getUserDetails);
 protectedRouter.patch("/user/:id", updateUserDetails);
 protectedRouter.post("/posts", postUserPosts);
@@ -40,6 +45,9 @@ protectedRouter.patch("/posts/:id", editPosts);
 
 protectedRouter.patch("/posts/like/:id", likePosts);
 protectedRouter.patch("/posts/dislike/:id", dislikePosts);
+
+protectedRouter.post("/comments/:id", commentPosts);
+protectedRouter.patch("/comments/like/:id", likeComments);
 
 protectedRouter.get("/search", searchUsers);
 protectedRouter.post("/follow/:id", followUsers);

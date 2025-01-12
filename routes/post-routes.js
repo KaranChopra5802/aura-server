@@ -7,12 +7,12 @@ const { createHmac, randomBytes } = require("crypto");
 const admin = require("firebase-admin");
 const { sendPushNotification } = require("../services/push_notification");
 const { send } = require("process");
+const { Comments } = require("../models/comment-model");
 
 const changePassword = async (req, res) => {
   try {
     const { userId, newPassword, oldPassword } = req.body;
-    const user = await User.findOne({_id: userId});
-    
+    const user = await User.findOne({ _id: userId });
 
     const salt = user.salt;
     const hashedPassword = createHmac("sha256", salt)
@@ -23,30 +23,64 @@ const changePassword = async (req, res) => {
         .update(newPassword)
         .digest("hex");
 
-      await User.updateOne({ _id:userId }, { password: newPasswordHash });
+      await User.updateOne({ _id: userId }, { password: newPasswordHash });
       res.status(200).send(user);
-    }else{
+    } else {
       res.status(403).send("Invalid username or password");
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.status(404).send(e);
   }
 };
 
 const getUserPosts = async (req, res) => {
-  const allPosts = await Post.find({}).populate(
-    "createdBy",
-    "firstName lastName _id nickname dateOfBirth followers following"
-  );
+  const allPosts = await Post.find({})
+    .populate(
+      "createdBy",
+      "firstName lastName _id nickname dateOfBirth followers following"
+    )
+    .populate({
+      path: "comments",
+      populate: {
+        path: "createdBy",
+        select: "firstName lastName",
+      },
+    });
   res.send(allPosts);
+};
+
+const getUserPostsFollowing = async (req, res) => {
+  const userId = req.params.id;
+
+  const user = await User.findById(userId).select("following");
+
+  if (user.following.length == 0) {
+    res.status(404).send("Following not found");
+  } else {
+    const postsByFollowing = await Post.find({
+      createdBy: { $in: user.following },
+    })
+      .populate(
+        "createdBy",
+        "firstName lastName _id nickname dateOfBirth followers following"
+      )
+      .populate({
+        path: "comments",
+        populate: {
+          path: "createdBy",
+          select: "firstName lastName",
+        },
+      });
+    res.send(postsByFollowing);
+  }
 };
 
 const getUserDetails = async (req, res) => {
   const id = req.params.id;
   const user = await User.findOne({ _id: id })
-    .populate("following", "firstName lastName _id email")
-    .populate("followers", "firstName lastName _id email")
+    .populate("following", "firstName lastName _id email profileImageUrl")
+    .populate("followers", "firstName lastName _id email profileImageUrl")
     .populate({
       path: "pointsSent",
       populate: {
@@ -77,6 +111,7 @@ const getUserDetails = async (req, res) => {
     pointsSent,
     pointsReceived,
     chats,
+    profileImageUrl
   } = user;
   res.send({
     _id,
@@ -93,6 +128,7 @@ const getUserDetails = async (req, res) => {
     pointsSent,
     pointsReceived,
     chats,
+    profileImageUrl
   });
 };
 
@@ -208,6 +244,51 @@ const dislikePosts = async (req, res) => {
   console.log(post);
 
   res.send("Post disliked successfully");
+};
+
+const commentPosts = async (req, res) => {
+  const id = req.params.id;
+
+  const { commentMade, commentMadeBy } = req.body;
+
+  const comment = await Comments.create({
+    comment: commentMade,
+    createdBy: commentMadeBy,
+  });
+
+  const post = await Post.findOneAndUpdate(
+    { _id: id },
+    { $push: { comments: comment._id } }
+  ).populate("createdBy", "pushId");
+
+  // console.log(post);
+
+  // sendPushNotification(
+  //   "Comment Added",
+  //   "A commented was added on your post",
+  //   post.createdBy.pushId
+  // );
+  res.send("Comment added successfully");
+};
+
+const likeComments = async (req, res) => {
+  const id = req.params.id;
+
+  const { likedBy } = req.body;
+
+  const comment = await Comments.updateOne({ _id: id }, { $inc: { likes: 1 } });
+
+  const commentPopulated = await Comments.findOne({ _id: id }).populate(
+    "createdBy",
+    "pushId"
+  );
+
+  sendPushNotification(
+    "Comment liked",
+    "Your comment was liked",
+    commentPopulated.createdBy.pushId
+  );
+  res.send("Comment liked successfully");
 };
 
 const searchUsers = async (req, res) => {
@@ -865,5 +946,8 @@ module.exports = {
   editEvent,
   continueEvent,
   markAttendanceEvent,
-  changePassword
+  changePassword,
+  commentPosts,
+  likeComments,
+  getUserPostsFollowing
 };
