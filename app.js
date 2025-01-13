@@ -46,6 +46,10 @@ admin.initializeApp({
   databaseURL: 'https://aura-social.firebaseio.com',
 });
 
+app.get("/", (req, res) => {
+  res.status(200).send("Working")
+})
+
 app.use(
   "/api/",
   loggingMiddleware(),
