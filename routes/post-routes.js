@@ -1,5 +1,5 @@
 const { Chat } = require("../models/chat-model");
-const { Payments, Points } = require("../models/points-model");
+const { Payments} = require("../models/points-model");
 const { Post } = require("../models/post-model");
 const { User } = require("../models/user-model");
 const { Events } = require("../models/events-model");
@@ -141,7 +141,19 @@ const updateUserDetails = async (req, res) => {
 const postUserPosts = async (req, res) => {
   const created = await Post.create(req.body);
 
-  const post = await created.populate("createdBy", "followers");
+  const post = await created.populate("createdBy", "_id followers");
+
+  const user = await User.findById(post.createdBy._id);
+
+  await user.updateOne({$inc : {auraPoints : 5}});
+
+  const payment = await Payments.create({
+    user: post.createdBy._id,
+    amount: 5,
+    transactionTime: Date.now(),
+  });
+
+  await user.updateOne({$push : {pointsReceived : payment._id}});
 
   console.log(post);
 
@@ -260,6 +272,20 @@ const commentPosts = async (req, res) => {
     { _id: id },
     { $push: { comments: comment._id } }
   ).populate("createdBy", "pushId");
+
+  const user = await User.findById(commentMadeBy);
+
+  await user.updateOne({$inc : {auraPoints : 2}});
+
+  const payment = await Payments.create({
+    user: user._id,
+    amount: 5,
+    transactionTime: Date.now(),
+  });
+
+  await user.updateOne({$push : {pointsReceived : payment._id}});
+
+  
 
   // console.log(post);
 
@@ -565,6 +591,12 @@ const createEvent = async (req, res) => {
       { $push: { joinees: id } }
     );
 
+    const payment = Payments.create({
+      user: id,
+      amount: 10,
+      transactionTime: Date.now(),
+    });
+    
     await User.updateOne(
       { _id: id },
       {
@@ -582,6 +614,25 @@ const createEvent = async (req, res) => {
         },
       }
     );
+
+    await User.updateOne(
+      { _id: id },
+      {
+        $inc: {
+          auraPoints: 10,
+        },
+      }
+    );
+
+    await User.updateOne(
+      { _id: id },
+      {
+        $push: {
+          pointsReceived: payment._id,
+        },
+      }
+    );
+
 
     for (let i = 0; i < populatedEvent.createdBy.followers.length; i++) {
       const follower = populatedEvent.createdBy.followers[i];

@@ -35,9 +35,9 @@ app.use(urlencoded({ extended: false }));
 
 const PORT = process.env.PORT || 8000;
 
-connect(process.env.MONGO_URL).then(
-  console.log("Mongo Connected!!")
-);
+connect(process.env.MONGO_URL || "mongodb://localhost:27017/aura").then(() => {
+  console.log("Mongo Connected!!");
+})
 
 const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
 
