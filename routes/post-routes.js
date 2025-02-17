@@ -279,7 +279,7 @@ const commentPosts = async (req, res) => {
 
   const payment = await Payments.create({
     user: user._id,
-    amount: 5,
+    amount: 2,
     transactionTime: Date.now(),
   });
 
@@ -591,7 +591,7 @@ const createEvent = async (req, res) => {
       { $push: { joinees: id } }
     );
 
-    const payment = Payments.create({
+    const payment = await Payments.create({
       user: id,
       amount: 10,
       transactionTime: Date.now(),
