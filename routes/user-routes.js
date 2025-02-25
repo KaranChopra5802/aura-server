@@ -109,8 +109,7 @@ const loginUser = async (req, res) => {
   }
 };
 const sendEmailVerification = (email) => {
-  var random = Math.random() * 1000000;
-  random = random.toFixed(0);
+  var random = Math.floor(100000 + Math.random() * 900000);
 
   var transporter = nodemailer.createTransport({
     service: "gmail",
