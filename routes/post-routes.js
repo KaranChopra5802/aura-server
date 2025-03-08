@@ -1,5 +1,5 @@
 const { Chat } = require("../models/chat-model");
-const { Payments} = require("../models/points-model");
+const { Payments } = require("../models/points-model");
 const { Post } = require("../models/post-model");
 const { User } = require("../models/user-model");
 const { Events } = require("../models/events-model");
@@ -75,6 +75,63 @@ const getUserPostsFollowing = async (req, res) => {
     res.send(postsByFollowing);
   }
 };
+const getPendingRequests = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId).select("following followers");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const followingSet = new Set(user.following.map((id) => id.toString())); 
+    const pendingFollowers = user.followers
+      .map((id) => id.toString())
+      .filter((follower) => !followingSet.has(follower)); 
+
+    if (pendingFollowers.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const pendingRequests = await User.find({ _id: { $in: pendingFollowers } })
+      .select("firstName lastName _id email profileImageUrl");
+
+    res.status(200).json(pendingRequests);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getPendingNotAcceptedRequests = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId).select("following followers");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const followersSet = new Set(user.followers.map((id) => id.toString()));
+    const pendingFollowing = user.following
+      .map((id) => id.toString())
+      .filter((following) => !followersSet.has(following)); 
+
+    if (pendingFollowing.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const pendingRequestsNA = await User.find({ _id: { $in: pendingFollowing } })
+      .select("firstName lastName _id email profileImageUrl");
+
+    res.status(200).json(pendingRequestsNA);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 const getUserDetails = async (req, res) => {
   const id = req.params.id;
@@ -111,7 +168,7 @@ const getUserDetails = async (req, res) => {
     pointsSent,
     pointsReceived,
     chats,
-    profileImageUrl
+    profileImageUrl,
   } = user;
   res.send({
     _id,
@@ -128,7 +185,7 @@ const getUserDetails = async (req, res) => {
     pointsSent,
     pointsReceived,
     chats,
-    profileImageUrl
+    profileImageUrl,
   });
 };
 
@@ -145,7 +202,7 @@ const postUserPosts = async (req, res) => {
 
   const user = await User.findById(post.createdBy._id);
 
-  await user.updateOne({$inc : {auraPoints : 5}});
+  await user.updateOne({ $inc: { auraPoints: 5 } });
 
   const payment = await Payments.create({
     user: post.createdBy._id,
@@ -153,7 +210,7 @@ const postUserPosts = async (req, res) => {
     transactionTime: Date.now(),
   });
 
-  await user.updateOne({$push : {pointsReceived : payment._id}});
+  await user.updateOne({ $push: { pointsReceived: payment._id } });
 
   console.log(post);
 
@@ -275,7 +332,7 @@ const commentPosts = async (req, res) => {
 
   const user = await User.findById(commentMadeBy);
 
-  await user.updateOne({$inc : {auraPoints : 2}});
+  await user.updateOne({ $inc: { auraPoints: 2 } });
 
   const payment = await Payments.create({
     user: user._id,
@@ -283,9 +340,7 @@ const commentPosts = async (req, res) => {
     transactionTime: Date.now(),
   });
 
-  await user.updateOne({$push : {pointsReceived : payment._id}});
-
-  
+  await user.updateOne({ $push: { pointsReceived: payment._id } });
 
   // console.log(post);
 
@@ -509,35 +564,48 @@ const startChat = async (req, res) => {
 
     const { receiver } = req.body;
 
-    const result = await Chat.create({
-      sender: id,
-      receiver,
+    const chat = await Chat.findOne({
+      $or: [
+        { sender: id, receiver },
+        { sender: receiver, receiver: id },
+      ],
     });
 
-    await User.updateOne({ _id: id }, { $push: { chats: result._id } });
+    if (chat) {
+      console.log(chat._id);
 
-    await User.updateOne(
-      { _id: id },
-      {
-        $push: { chatInfo: { chatID: result._id, socketID: null } },
-      }
-    );
+      return res.status(200).send({ chatID: chat._id });
+    } else {
+      const result = await Chat.create({
+        sender: id,
+        receiver,
+      });
 
-    await User.updateOne(
-      { _id: receiver },
-      {
-        $push: { chatInfo: { chatID: result._id, socketID: null } },
-      }
-    );
+      await User.updateOne({ _id: id }, { $push: { chats: result._id } });
 
-    await User.updateOne(
-      { _id: receiver },
-      {
-        $push: { chats: result._id },
-      }
-    );
+      await User.updateOne(
+        { _id: id },
+        {
+          $push: { chatInfo: { chatID: result._id, socketID: null } },
+        }
+      );
 
-    res.status(200).send({ chatID: result._id });
+      await User.updateOne(
+        { _id: receiver },
+        {
+          $push: { chatInfo: { chatID: result._id, socketID: null } },
+        }
+      );
+
+      await User.updateOne(
+        { _id: receiver },
+        {
+          $push: { chats: result._id },
+        }
+      );
+
+      res.status(200).send({ chatID: result._id });
+    }
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Internal Server Error" });
@@ -596,7 +664,7 @@ const createEvent = async (req, res) => {
       amount: 10,
       transactionTime: Date.now(),
     });
-    
+
     await User.updateOne(
       { _id: id },
       {
@@ -632,7 +700,6 @@ const createEvent = async (req, res) => {
         },
       }
     );
-
 
     for (let i = 0; i < populatedEvent.createdBy.followers.length; i++) {
       const follower = populatedEvent.createdBy.followers[i];
@@ -1000,5 +1067,7 @@ module.exports = {
   changePassword,
   commentPosts,
   likeComments,
-  getUserPostsFollowing
+  getUserPostsFollowing,
+  getPendingRequests,
+  getPendingNotAcceptedRequests
 };

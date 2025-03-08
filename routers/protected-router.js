@@ -28,13 +28,17 @@ const {
   changePassword,
   commentPosts,
   likeComments,
-  getUserPostsFollowing
+  getUserPostsFollowing,
+  getPendingRequests,
+  getPendingNotAcceptedRequests
 } = require("../routes/post-routes");
 
 const protectedRouter = express.Router();
 
 protectedRouter.get("/posts", getUserPosts);
 protectedRouter.get("/posts/following/:id", getUserPostsFollowing);
+protectedRouter.get("/user/pending-requests/:id", getPendingRequests);
+protectedRouter.get("/user/pending-requests-na/:id", getPendingNotAcceptedRequests);
 
 protectedRouter.get("/user/:id", getUserDetails);
 protectedRouter.patch("/user/:id", updateUserDetails);
@@ -70,5 +74,7 @@ protectedRouter.delete("/events/delete/:id", deleteEvent);
 protectedRouter.patch("/events/edit/:id", editEvent);
 protectedRouter.post("/events/continue/:id", continueEvent);
 protectedRouter.post("/events/attendance/:id", markAttendanceEvent);
+
+
 
 module.exports = protectedRouter;
