@@ -30,7 +30,8 @@ const {
   likeComments,
   getUserPostsFollowing,
   getPendingRequests,
-  getPendingNotAcceptedRequests
+  getPendingNotAcceptedRequests,
+  sendNotificationToAll
 } = require("../routes/post-routes");
 
 const protectedRouter = express.Router();
@@ -75,6 +76,7 @@ protectedRouter.patch("/events/edit/:id", editEvent);
 protectedRouter.post("/events/continue/:id", continueEvent);
 protectedRouter.post("/events/attendance/:id", markAttendanceEvent);
 
+protectedRouter.post("/notification", sendNotificationToAll);
 
 
 module.exports = protectedRouter;

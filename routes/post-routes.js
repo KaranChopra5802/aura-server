@@ -1037,6 +1037,23 @@ const markAttendanceEvent = async (req, res) => {
     console.error(e);
   }
 };
+const sendNotificationToAll = async (req, res) => {
+  try {
+    const title = req.body.title;
+    const message = req.body.message;
+
+    const users = await User.find({}).select("pushId");
+
+    for (let i = 0; i < users.length; i++) {
+      sendPushNotification(title, message, users[i].pushId.toString());
+    }
+
+    res.status(200).json({ message: "Notification sent to all users" });  
+    
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 module.exports = {
   getUserPosts,
@@ -1069,5 +1086,6 @@ module.exports = {
   likeComments,
   getUserPostsFollowing,
   getPendingRequests,
-  getPendingNotAcceptedRequests
+  getPendingNotAcceptedRequests,
+  sendNotificationToAll
 };
